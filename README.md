@@ -92,6 +92,7 @@ The orchestration pipeline is implemented as a Databricks Workflow Job:
 
 ## 📂 Repository Structure
 
+```text
 FHIR_Medallion_Pipeline/
 ├── 00_Schema_Creation.ipynb
 ├── 01_Raw_Bronze_Ingestion.ipynb
