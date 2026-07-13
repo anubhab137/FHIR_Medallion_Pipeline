@@ -1,8 +1,7 @@
 # End-to-End FHIR Healthcare Medallion Data Pipeline
 
 ## 📌 Project Overview
-This project implements an enterprise-grade, end-to-end Medallion Data Pipeline on Databricks using PySpark and Delta Lake. It ingests clinical data from the public HAPI FHIR API (Patient, Encounter, Observation, Condition), enforces data quality, tracks dimensional changes using SCD Type 2, and models analytical Gold layer tables.
-
+This project implements an enterprise-grade, end-to-end Medallion Data Pipeline on Databricks using PySpark and Delta Lake. It ingests clinical data from the public HAPI FHIR API (`Patient`, `Encounter`, `Observation`, `Condition`) in both **JSON** and **XML** formats, enforces data quality, tracks dimensional changes using SCD Type 2, and models analytical Gold layer tables.
 ---
 
 ## 🏗️ Architecture & Medallion Layers
@@ -11,7 +10,7 @@ This project implements an enterprise-grade, end-to-end Medallion Data Pipeline 
                 │ (Incremental Fetch & Pagination)
                 ▼
         ┌───────────────────┐
-        │    RAW SCHEMA     │ Local JSON Archives + Parsed Delta Tables
+        │    RAW SCHEMA     │ Local JSON/XML Archives + Parsed Delta Tables
         └─────────┬─────────┘
                   │ (Metadata Logging: Timestamps & API Params)
                   ▼
@@ -35,11 +34,13 @@ This project implements an enterprise-grade, end-to-end Medallion Data Pipeline 
    * Initializes catalog schemas (raw, bronze, silver, gold).
    * Seeds the metadata control table (raw.ingestion_metadata) to define execution order dynamically.
 
-2. Raw & Bronze Ingestion Layer (01_Raw_Bronze_Ingestion):
-   * Incremental Ingestion: Captures N days of incremental records via _lastUpdated.
-   * Pagination: Recursively follows FHIR next URL links.
-   * Raw Storage: Archives raw JSON payloads locally (/tmp/fhir_raw/...).
-   * Bronze Enriched: Appends audit metadata (extraction_timestamp, api_url_or_params).
+2. Raw & Bronze Ingestion Layer:
+   * 01_Raw_Bronze_Ingestion: Handles REST API calls yielding standard JSON payloads.
+   * 01_Raw_Bronze_Ingestion_XML (Optional Extension): Ingests FHIR Bundle XML streams (`_format=xml`) using ElementTree and Spark XML readers into `raw.*_xml` and `bronze.*_xml`.   
+      * Incremental Ingestion: Captures N days of incremental records via _lastUpdated.
+      * Pagination: Recursively follows FHIR next URL links.
+      * Raw Storage: Archives raw JSON payloads locally (/tmp/fhir_raw/...).
+      * Bronze Enriched: Appends audit metadata (extraction_timestamp, api_url_or_params).
 
 3. Silver Transformation Layer (02_Silver_SCD2_Transformation):
    * Key Normalization: Strips the Patient/ prefix from subject.reference foreign keys (regexp_replace).
@@ -86,7 +87,7 @@ The orchestration pipeline is implemented as a Databricks Workflow Job:
 3. 02_Silver_SCD2_Transformation -> Applies key cleaning and SCD Type 2 merges across all 4 entities.
 4. 03_Gold_Analytics_Modeling -> Pre-aggregates child clinical entities and populates gold.dim_patient and gold.fact_patient_encounters.
 
-(See workflow_definition.yaml / workflow_definition.json for the complete Databricks Job definition).
+(See workflow_definition.yaml for the complete Databricks Job definition).
 
 ---
 
@@ -96,6 +97,7 @@ The orchestration pipeline is implemented as a Databricks Workflow Job:
 FHIR_Medallion_Pipeline/
 ├── 00_Schema_Creation.ipynb
 ├── 01_Raw_Bronze_Ingestion.ipynb
+├── 01_Raw_Bronze_Ingestion_XML.ipynb
 ├── 02_Silver_SCD2_Transformation.ipynb
 ├── 03_Gold_Analytics_Modeling.ipynb
 ├── workflow_definition.yaml
