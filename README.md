@@ -2,6 +2,7 @@
 
 ## 📌 Project Overview
 This project implements an enterprise-grade, end-to-end Medallion Data Pipeline on Databricks using PySpark and Delta Lake. It ingests clinical data from the public HAPI FHIR API (`Patient`, `Encounter`, `Observation`, `Condition`) in both **JSON** and **XML** formats, enforces data quality, tracks dimensional changes using SCD Type 2, and models analytical Gold layer tables.
+
 ---
 
 ## 🏗️ Architecture & Medallion Layers
